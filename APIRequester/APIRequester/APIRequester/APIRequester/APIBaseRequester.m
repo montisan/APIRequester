@@ -92,7 +92,9 @@
 {
     NSUInteger requestId = 0;
     
-    if ([self.validator apiRequester:self isValidWithParamData:params])
+    NSError *error = [self.validator apiRequester:self errorWithParamData:params];
+    
+    if (!error)
     {
         if ([self isReachable])
         {
@@ -114,7 +116,7 @@
     }
     else
     {
-        [self requestCompletionWithErrorType:APIRequesterErrorTypeParamInvalid errorMsg:nil];
+        [self requestCompletionWithErrorType:APIRequesterErrorTypeParamInvalid errorMsg:error.domain];
     }
     
     return requestId;
@@ -130,13 +132,15 @@
     {
         self.fetchedRawData = response.responseData;
         
-        if ([self.validator apiRequester:self isValidWithResponseData:self.fetchedRawData])
+        NSError *error = [self.validator apiRequester:self errorWithResponseData:self.fetchedRawData];
+        
+        if (!error)
         {
             [self requestCompletionWithErrorType:APIRequesterErrorTypeSuccess errorMsg:nil];
         }
         else
         {
-            [self requestCompletionWithErrorType:APIRequesterErrorTypeResponseInvalid errorMsg:nil];
+            [self requestCompletionWithErrorType:APIRequesterErrorTypeResponseInvalid errorMsg:error.domain];
         }
         
     }

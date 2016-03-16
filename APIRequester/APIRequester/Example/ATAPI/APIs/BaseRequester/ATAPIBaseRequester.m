@@ -68,14 +68,14 @@
 
 #pragma mark - APIRequesterDataValidator
 
-- (BOOL)apiRequester:(APIBaseRequester *)requester isValidWithParamData:(NSDictionary *)data
+- (NSError *)apiRequester:(APIBaseRequester *)requester errorWithParamData:(NSDictionary *)data
 {
-    return data != nil;
+    return nil;
 }
 
-- (BOOL)apiRequester:(APIBaseRequester *)requester isValidWithResponseData:(NSDictionary *)data
+- (NSError *)apiRequester:(APIBaseRequester *)requester errorWithResponseData:(NSDictionary *)data
 {
-    return data != nil;
+    return nil;
 }
 
 @end

@@ -33,8 +33,8 @@
 
 @required
 
-- (BOOL)apiRequester:(APIBaseRequester *)requester isValidWithParamData:(NSDictionary *)data;
-- (BOOL)apiRequester:(APIBaseRequester *)requester isValidWithResponseData:(NSDictionary *)data;
+- (NSError *)apiRequester:(APIBaseRequester *)requester errorWithParamData:(NSDictionary *)data;
+- (NSError *)apiRequester:(APIBaseRequester *)requester errorWithResponseData:(NSDictionary *)data;
 
 @end
 
