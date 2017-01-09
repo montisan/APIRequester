@@ -16,7 +16,7 @@ Pod::Spec.new do |s|
   #
 
   s.name         = "APIRequester"
-  s.version      = "0.0.1"
+  s.version      = "0.0.2"
   s.summary      = "A network kit for RESTful API requests."
 
   # This description is used to generate tags and improve search results.
@@ -25,6 +25,7 @@ Pod::Spec.new do |s|
   #   * Write the description between the DESC delimiters below.
   #   * Finally, don't worry about the indent, CocoaPods strips it!
   s.description  = <<-DESC
+        A network kit for RESTful API requests. It requres AFNetworking.
                    DESC
 
   s.homepage     = "https://github.com/hncoder/APIRequester.git"
@@ -65,6 +66,7 @@ Pod::Spec.new do |s|
 
   # s.platform     = :ios
   s.platform     = :ios, "7.0"
+  s.requires_arc = true
 
   #  When using multiple platforms
   # s.ios.deployment_target = "5.0"
@@ -116,10 +118,10 @@ Pod::Spec.new do |s|
   #  the lib prefix of their name.
   #
 
-  # s.framework  = "SomeFramework"
+  s.framework  = "Foundation"
   # s.frameworks = "SomeFramework", "AnotherFramework"
 
-  s.dependency 'AFNetworking', '~> 2.3'
+  s.dependency 'AFNetworking'
 
   # s.library   = "iconv"
   # s.libraries = "iconv", "xml2"

@@ -12,11 +12,11 @@
 
 @interface APIRequestProxy()
 
-@property (nonatomic, strong) NSMutableDictionary *requestOperations;
+@property (nonatomic, strong) NSMutableDictionary *requestTasks;
 @property (nonatomic, strong) NSMutableDictionary *serviceIdentifiers;
 @property (nonatomic, assign) NSUInteger currentRequestId;
 
-@property (nonatomic, strong) AFHTTPRequestOperationManager *requestManager;
+@property (nonatomic, strong) AFHTTPSessionManager *requestManager;
 
 @end
 
@@ -29,9 +29,9 @@ SINGLETON_FUN_IMP(Proxy)
     self = [super init];
     if (self)
     {
-        _requestOperations = [NSMutableDictionary dictionary];
+        _requestTasks = [NSMutableDictionary dictionary];
         _serviceIdentifiers = [NSMutableDictionary dictionary];
-        _requestManager = [AFHTTPRequestOperationManager manager];
+        _requestManager = [AFHTTPSessionManager manager];
         _requestManager.responseSerializer = [AFHTTPResponseSerializer serializer];
         _currentRequestId = 0;
     }
@@ -104,75 +104,74 @@ SINGLETON_FUN_IMP(Proxy)
     
     NSUInteger requestId = [self generateRequestId];
     
-    AFHTTPRequestOperation *operation = [self.requestManager HTTPRequestOperationWithRequest:request success:^(AFHTTPRequestOperation *operation, id responseObject) {
+    NSURLSessionDataTask *task = [self.requestManager dataTaskWithRequest:request uploadProgress:nil downloadProgress:nil completionHandler:^(NSURLResponse * _Nonnull response, id  _Nullable responseObject, NSError * _Nullable error) {
         
-        [self requestCompletion:completion requestId:requestId operation:operation error:nil];
+        [self requestCompletion:completion requestId:requestId task:task responseObject:responseObject error:error];
         
-    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
-        
-        [self requestCompletion:completion requestId:requestId operation:operation error:error];
     }];
     
-    [_requestOperations setObject:operation forKey:@(requestId)];
-    [[self.requestManager operationQueue] addOperation:operation];
+    [task resume];
+    
+    [_requestTasks setObject:task forKey:@(requestId)];
     
     return requestId;
 }
 
 - (void)requestCompletion:(RequestCompletion)completion
                 requestId:(NSUInteger)requestId
-                operation:(AFHTTPRequestOperation *)operation
+                task:(NSURLSessionDataTask *)task
+           responseObject:(id)responseObject
                     error:(NSError *)error
 {
-    AFHTTPRequestOperation *op = [_requestOperations objectForKey:@(requestId)];
+    NSURLSessionDataTask *op = [_requestTasks objectForKey:@(requestId)];
     if (op == nil)
     {
         return;
     }
     
-    APIRequestResponse *response = [self responseWithOperation:operation error:error requestId:requestId];
+    APIRequestResponse *response = [self responseWithTask:task responseObject:responseObject error:error requestId:requestId];
     
     completion(response);
     
-    [_requestOperations removeObjectForKey:@(requestId)];
+    [_requestTasks removeObjectForKey:@(requestId)];
     [_serviceIdentifiers removeObjectForKey:@(requestId)];
 }
 
 
-- (APIRequestResponse *)responseWithOperation:(AFHTTPRequestOperation *)operation error:(NSError *)error requestId:(NSUInteger)requestId
+- (APIRequestResponse *)responseWithTask:(NSURLSessionDataTask *)task responseObject:(id)responseObject error:(NSError *)error requestId:(NSUInteger)requestId
 {
     
     NSString *identifier = [_serviceIdentifiers objectForKey:@(requestId)];
-    id responseData = operation.responseData;
+    id responseData = task.response;
     if (identifier.length > 0)
     {
         id<APIRequestService> service = [[APIRequestServiceManager sharedManager] serviceWithIdentifier:identifier];
         
         if (service.dataProcessor)
         {
-            responseData = [service.dataProcessor dataAfterProcessResponseData:operation.responseData];
+            responseData = [service.dataProcessor dataAfterProcessResponseData:responseObject];
         }
     }
     
-    APIRequestResponse *response = [[APIRequestResponse alloc] initWithRequestId:requestId responseData:responseData request:operation.request error:error];
+    APIRequestResponse *response = [[APIRequestResponse alloc] initWithRequestId:requestId responseData:responseData request:task.originalRequest error:error];
     
     return response;
 }
 
 - (void)cancelRequestWithRequestId:(NSUInteger)requestId
 {
-    AFHTTPRequestOperation *operation = [_requestOperations objectForKey:@(requestId)];
-    [operation cancel];
+    NSURLSessionDataTask *task = [_requestTasks objectForKey:@(requestId)];
+    [task cancel];
     
-    [_requestOperations removeObjectForKey:@(requestId)];
+    [_requestTasks removeObjectForKey:@(requestId)];
     [_serviceIdentifiers removeObjectForKey:@(requestId)];
 }
 
 - (BOOL)isLoadingWithRequestId:(NSUInteger)requestId
 {
-    AFHTTPRequestOperation *operation = [_requestOperations objectForKey:@(requestId)];
+    NSURLSessionDataTask *task = [_requestTasks objectForKey:@(requestId)];
     
-    return operation != nil;
+    return task != nil;
 }
 
 - (NSUInteger)generateRequestId
