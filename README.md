@@ -26,4 +26,4 @@ APIRequester is available under the MIT license. See the LICENSE file for more i
 
 ## Notes
 
-A networking kit for RESTful API requests，modified from [RTNetworing](https://github.com/casatwy/RTNetworking).
+A networking kit for RESTful API requests，the reference is [RTNetworing](https://github.com/casatwy/RTNetworking).
